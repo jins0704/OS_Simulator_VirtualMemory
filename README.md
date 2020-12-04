@@ -74,9 +74,11 @@ To duplicate the parent's address space, set up the PTE in the child's page tabl
 - Document: One PDF document (200 pts) including;
 	- Describe how you implement page allocation, deallocation, fork, and copy-on-write.
 	- *This time, the quality of writing will be carefully evaluated.*
-		- Describe your entire journey to complete the program. You must clarify why you choose the particular design you use over other alternatives, what is your key idea in implementing those features, explains your failed tries, the analysis on the causes of those failures, and how you resolved them.
+		- Describe your *entire journey to complete the assignment*. You must clarify why you choose the particular design you use over other alternatives, what is your key idea in implementing those features, explains your failed tries, the analysis on the causes of those failures, and how you resolved them.
 		- Bad example: To implement page allocation, find xyz by increasing from 0 to 9999. Then increase x by 2. If xx > 0, do something.
 		- Good example: To implement page allocation, firstly I used abc properties. Since it is xyz, it is kkk if xyz is 99. So, try to find something like plm by iterating the cde list and finds something with xxx. This value is increased by 2 to indicate something for xyz. I thought this should work, but it did not when xyz is 0xdeadbeef. It turned out that xyz is not true but abc is false. So, I modified it ....
+	  - *Must explain your failures, what the problem was, and how you fixed it.*
+	- Explain what happens to the page table while running `testcases/cow-2`. *Show the final page tables for process 0, 1, and 2, and explain why are those*.
 	- Lesson learned
 	- No more than six pages
 	
