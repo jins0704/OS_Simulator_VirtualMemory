@@ -61,7 +61,27 @@ extern unsigned int mapcounts[];
  *   Return -1 if all page frames are allocated.
  */
 unsigned int alloc_page(unsigned int vpn, unsigned int rw)
-{
+{	
+	bool rwflag = false;
+	if (rw == RW_WRITE) rwflag = true;
+
+	int op_index = vpn / NR_PTES_PER_PAGE;
+	int ip_index = vpn % NR_PTES_PER_PAGE;
+	
+	if(current->pagetable.outer_ptes[op_index] == NULL){
+		current->pagetable.outer_ptes[op_index] = malloc(sizeof(struct pte_directory));
+	}
+
+	for(int i = 0; i < NR_PAGEFRAMES; i++){
+		if(mapcounts[i] == 0){
+			mapcounts[i] += 1;
+			current->pagetable.outer_ptes[op_index]->ptes[vpn % NR_PTES_PER_PAGE].valid = true;
+			current->pagetable.outer_ptes[op_index]->ptes[vpn % NR_PTES_PER_PAGE].writable = rwflag;
+			current->pagetable.outer_ptes[op_index]->ptes[vpn % NR_PTES_PER_PAGE].pfn = i;
+			return i;
+		}
+	}
+	
 	return -1;
 }
 
