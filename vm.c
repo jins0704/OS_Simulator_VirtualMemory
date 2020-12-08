@@ -63,7 +63,7 @@ extern unsigned int mapcounts[];
 unsigned int alloc_page(unsigned int vpn, unsigned int rw)
 {	
 	bool rwflag = false;
-	if (rw == RW_WRITE) rwflag = true;
+	if (rw != 1) rwflag = true;
 
 	int op_index = vpn / NR_PTES_PER_PAGE;
 	int ip_index = vpn % NR_PTES_PER_PAGE;
@@ -75,9 +75,9 @@ unsigned int alloc_page(unsigned int vpn, unsigned int rw)
 	for(int i = 0; i < NR_PAGEFRAMES; i++){
 		if(mapcounts[i] == 0){
 			mapcounts[i] += 1;
-			current->pagetable.outer_ptes[op_index]->ptes[vpn % NR_PTES_PER_PAGE].valid = true;
-			current->pagetable.outer_ptes[op_index]->ptes[vpn % NR_PTES_PER_PAGE].writable = rwflag;
-			current->pagetable.outer_ptes[op_index]->ptes[vpn % NR_PTES_PER_PAGE].pfn = i;
+			current->pagetable.outer_ptes[op_index]->ptes[ip_index].valid = true;
+			current->pagetable.outer_ptes[op_index]->ptes[ip_index].writable = rwflag;
+			current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn = i;
 			return i;
 		}
 	}
@@ -97,6 +97,13 @@ unsigned int alloc_page(unsigned int vpn, unsigned int rw)
  */
 void free_page(unsigned int vpn)
 {
+	int op_index = vpn / NR_PTES_PER_PAGE;
+	int ip_index = vpn % NR_PTES_PER_PAGE;
+
+	current->pagetable.outer_ptes[op_index]->ptes[ip_index].valid = false;
+	mapcounts[current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn] -= 1;
+	current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn = 0;
+
 }
 
 
