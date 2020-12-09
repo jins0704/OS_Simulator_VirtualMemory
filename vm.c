@@ -107,6 +107,8 @@ void free_page(unsigned int vpn)
 	int ip_index = vpn % NR_PTES_PER_PAGE;
 
 	current->pagetable.outer_ptes[op_index]->ptes[ip_index].valid = false;
+	current->pagetable.outer_ptes[op_index]->ptes[ip_index].writable = false;
+	current->pagetable.outer_ptes[op_index]->ptes[ip_index].private = 0;
 	mapcounts[current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn] -= 1;
 	current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn = 0;
 
@@ -131,18 +133,29 @@ void free_page(unsigned int vpn)
  */
 bool handle_page_fault(unsigned int vpn, unsigned int rw)
 {
-	/*int op_index = vpn / NR_PTES_PER_PAGE;
+	int op_index = vpn / NR_PTES_PER_PAGE;
 	int ip_index = vpn % NR_PTES_PER_PAGE;
-	 // Failed to translate the address. So, call OS through the page fault
-	 // and restart the translation if the fault is successfully handled.
-	mapcounts[current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn] -= 1;
-
 	
-		current->pagetable.outer_ptes[op_index]->ptes[ip_index].valid = true;
-		current->pagetable.outer_ptes[op_index]->ptes[ip_index].writable = true;
-		//current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn = j;
 	
-	*/
+	if(current->pagetable.outer_ptes[op_index]->ptes[ip_index].private == 1){
+		if(mapcounts[current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn] == 1){
+			current->pagetable.outer_ptes[op_index]->ptes[ip_index].valid = true;
+			current->pagetable.outer_ptes[op_index]->ptes[ip_index].writable = true;
+			return true;
+		}
+		else{
+			for(int i = 0; i < NR_PAGEFRAMES; i++){
+				if(mapcounts[i] == 0){
+					mapcounts[i] += 1;
+					current->pagetable.outer_ptes[op_index]->ptes[ip_index].valid = true;
+					current->pagetable.outer_ptes[op_index]->ptes[ip_index].writable = true;
+					mapcounts[current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn] -= 1;
+					current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn = i;
+					return true;
+				}
+			}
+		}
+	}
 	return false;
 }
 
