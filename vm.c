@@ -78,6 +78,12 @@ unsigned int alloc_page(unsigned int vpn, unsigned int rw)
 			current->pagetable.outer_ptes[op_index]->ptes[ip_index].valid = true;
 			current->pagetable.outer_ptes[op_index]->ptes[ip_index].writable = rwflag;
 			current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn = i;
+			if(rwflag == true){
+				current->pagetable.outer_ptes[op_index]->ptes[ip_index].private = 1;
+			}
+			else{
+				current->pagetable.outer_ptes[op_index]->ptes[ip_index].private = 0;
+			}
 			return i;
 		}
 	}
@@ -125,6 +131,18 @@ void free_page(unsigned int vpn)
  */
 bool handle_page_fault(unsigned int vpn, unsigned int rw)
 {
+	/*int op_index = vpn / NR_PTES_PER_PAGE;
+	int ip_index = vpn % NR_PTES_PER_PAGE;
+	 // Failed to translate the address. So, call OS through the page fault
+	 // and restart the translation if the fault is successfully handled.
+	mapcounts[current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn] -= 1;
+
+	
+		current->pagetable.outer_ptes[op_index]->ptes[ip_index].valid = true;
+		current->pagetable.outer_ptes[op_index]->ptes[ip_index].writable = true;
+		//current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn = j;
+	
+	*/
 	return false;
 }
 
@@ -147,6 +165,46 @@ bool handle_page_fault(unsigned int vpn, unsigned int rw)
  *   bit in PTE and mapcounts for shared pages. You may use pte->private for 
  *   storing some useful information :-)
  */
+ 
 void switch_process(unsigned int pid)
 {
+	struct process *p = NULL;
+	struct list_head *ptr, *ptrn;
+
+	list_for_each_safe(ptr, ptrn, &processes){
+		p = list_entry(ptr, struct process, list);
+		if(p->pid == pid){
+			list_add_tail(&current->list,&processes);
+			list_del_init(&p->list);
+			current = p;
+			ptbr = &p->pagetable;
+			return ;
+		}
+	}
+
+	p = malloc(sizeof(struct process));
+	p->pid = pid;
+
+	for(int j=0; j< NR_PTES_PER_PAGE; j++){
+		if(current->pagetable.outer_ptes[j] != NULL){
+			p->pagetable.outer_ptes[j] = malloc(sizeof(struct pte_directory));
+	
+			for(int q=0; q< NR_PTES_PER_PAGE; q++){
+				if(current->pagetable.outer_ptes[j]->ptes[q].valid == true){
+					p->pagetable.outer_ptes[j]->ptes[q].valid = true;
+					
+					current->pagetable.outer_ptes[j]->ptes[q].writable = false;
+					p->pagetable.outer_ptes[j]->ptes[q].writable = false;
+					
+					p->pagetable.outer_ptes[j]->ptes[q].private = current->pagetable.outer_ptes[j]->ptes[q].private;
+					p->pagetable.outer_ptes[j]->ptes[q].pfn = current->pagetable.outer_ptes[j]->ptes[q].pfn;
+					mapcounts[current->pagetable.outer_ptes[j]->ptes[q].pfn] += 1;
+				}
+			}	
+		}
+	}
+		
+	list_add_tail(&current->list,&processes);
+	current = p;
+	ptbr = &p->pagetable;
 }
