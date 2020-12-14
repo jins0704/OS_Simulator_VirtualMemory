@@ -136,10 +136,8 @@ bool handle_page_fault(unsigned int vpn, unsigned int rw)
 	int op_index = vpn / NR_PTES_PER_PAGE;
 	int ip_index = vpn % NR_PTES_PER_PAGE;
 	
-	
 	if(current->pagetable.outer_ptes[op_index]->ptes[ip_index].private == 1){
 		if(mapcounts[current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn] == 1){
-			current->pagetable.outer_ptes[op_index]->ptes[ip_index].valid = true;
 			current->pagetable.outer_ptes[op_index]->ptes[ip_index].writable = true;
 			return true;
 		}
@@ -147,7 +145,6 @@ bool handle_page_fault(unsigned int vpn, unsigned int rw)
 			for(int i = 0; i < NR_PAGEFRAMES; i++){
 				if(mapcounts[i] == 0){
 					mapcounts[i] += 1;
-					current->pagetable.outer_ptes[op_index]->ptes[ip_index].valid = true;
 					current->pagetable.outer_ptes[op_index]->ptes[ip_index].writable = true;
 					mapcounts[current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn] -= 1;
 					current->pagetable.outer_ptes[op_index]->ptes[ip_index].pfn = i;
